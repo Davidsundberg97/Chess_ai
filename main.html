@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Chess</title>
+        <style>
+            html, body {
+                height: 100%;
+                margin: 0;
+                background: linear-gradient(to bottom, white, grey);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+            }
+            .timer {
+                padding: 10px;
+                color: #fff;
+                position: absolute;
+                text-align: center;
+                width: 100px;
+                background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%);
+            }
+
+            .black-timer {
+                background: radial-gradient(circle, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+                top: 10px;
+                left: 10px;
+            }
+
+            .white-timer {
+                background: radial-gradient(circle, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
+                color: black;
+                bottom: 10px;
+                left: 10px;
+            }
+            #capturedPiecesCanvas {
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 60px; /* Adjust this value to change the size of the images */
+                height: 480px; /* Adjust this value to change the number of images that can be displayed at once */
+            }
+            #mainContent {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            #boardContainer {
+                display: flex;
+                justify-content: center;
+            }
+            #capturedPiecesContainer {
+                position: absolute;
+                right: 0;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="timer black-timer">
+            <p id="blackTimer"></p>
+        </div>
+        <div class="timer white-timer">
+            <p id="whiteTimer"></p>
+        </div>
+        <div id="mainContent">
+            <h1>Welcome to my Chess game!</h1>
+            <p>This is a simple chess game built with JavaScript.</p>
+            <div id="boardContainer">
+                <canvas id="myCanvas" width="500" height="500"></canvas>
+            </div>
+            
+            <div id="capturedPiecesContainer">
+                <canvas id="capturedWhitePiecesCanvas" width="60" height="240"></canvas>
+                <canvas id="capturedBlackPiecesCanvas" width="60" height="240"></canvas>
+            </div>
+            
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.min.js"></script>
+        <script src="chess.js"></script>
+    </body>
+</html>
