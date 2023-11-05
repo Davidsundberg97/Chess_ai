@@ -1,5 +1,23 @@
+
+
+
+import { initializeModel, convertGameStateToInput } from './model.js';
+
+// Now you can use these functions in this file
+let model = initializeModel();
+//let input = convertGameStateToInput(game);
+
 window.onload = function() {
     // Your JavaScript code goes here
+
+
+    const tensor = tf.tensor([1, 2, 3, 4]);
+
+    // Perform an operation on the tensor
+    const squaredTensor = tensor.square();
+
+    // Print the result to the console
+    squaredTensor.print();
 
 // Select the canvas and get the context
 const canvas = document.getElementById('myCanvas');
@@ -101,13 +119,16 @@ images['w']['k'].src = 'Images/wk.png';
 // Start the game loop
 function gameLoop() {
     drawBoard();
-
+        if (game.turn() === 'b') {
+            makePredictedMove();
+        }
     // Check if the game is over
     if (game.game_over()) {
         ctx.fillStyle = 'black';
         ctx.font = '50px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+
         if (game.in_checkmate()) {
             const winner = game.turn() === 'w' ? 'Black' : 'White';
             ctx.fillText(winner + ' wins!', canvas.width / 2, canvas.height / 2);
@@ -125,6 +146,27 @@ gameLoop();
 
 
 
+function makePredictedMove() {
+     // Convert the current game state to a tensor
+     const input = convertGameStateToInput(game);
+
+     // Use the model to predict the next move
+     const output = model.predict(input);
+ 
+     // Interpret the output to determine the next move
+     const move = interpretOutput(output);
+ 
+     // Make the move
+     game.move(move);
+}
+
+function interpretOutput(output) {
+    // This function should convert the output of the model into a move
+    // For now, let's just make a random legal move
+    const legalMoves = game.moves();
+    const randomIndex = Math.floor(Math.random() * legalMoves.length);
+    return legalMoves[randomIndex];
+}
 
 
 canvas.addEventListener('mousedown', function(e) {
