@@ -1,6 +1,3 @@
-
-
-
 import { initializeModel, convertGameStateToInput } from './model.js';
 
 // Now you can use these functions in this file
@@ -115,15 +112,34 @@ images['w']['b'].src = 'Images/wb.png';
 images['w']['q'].src = 'Images/wq.png';
 images['w']['k'].src = 'Images/wk.png';
 
+let isMoveBeingMade = false;
 
 // Start the game loop
 function gameLoop() {
     drawBoard();
-        if (game.turn() === 'b') {
+        if (game.turn() === 'b' && !isMoveBeingMade) {
             makePredictedMove();
         }
     // Check if the game is over
     if (game.game_over()) {
+
+        // Get the game history
+        const history = game.history();
+
+        // Get a reference to the Firestore database
+        var db = firebase.firestore();
+
+        // Add a new document with the game history
+        db.collection("games").add({
+            history: history
+        })
+        .then(function(docRef) {
+            console.log("Game saved with ID: ", docRef.id);
+        })
+        .catch(function(error) {
+            console.error("Error saving game: ", error);
+        });
+
         ctx.fillStyle = 'black';
         ctx.font = '50px Arial';
         ctx.textAlign = 'center';
@@ -142,11 +158,18 @@ function gameLoop() {
     drawCapturedPieces();
 }
 
-gameLoop();
+// Start the game loop when the page loads
+window.onload = function() {
+    gameLoop();
+};
 
 
 
 function makePredictedMove() {
+     isMoveBeingMade = true;
+
+     // Save the current game state
+    const oldGameState = game.fen();
      // Convert the current game state to a tensor
      const input = convertGameStateToInput(game);
 
@@ -156,8 +179,25 @@ function makePredictedMove() {
      // Interpret the output to determine the next move
      const move = interpretOutput(output);
  
-     // Make the move
-     game.move(move);
+    // Wait for 2 seconds before making the move
+    setTimeout(function() {
+        // Make the move
+        game.move(move);
+         // Calculate the reward
+        const reward = calculateReward(oldGameState, game.fen());
+        console.log('Reward:', reward);
+        isMoveBeingMade = false;
+    }, 500);
+}
+
+function calculateReward(oldGameState, newGameState) {
+    // Count the number of pieces in the old and new game states
+    const oldPieceCount = (oldGameState.match(/[prnbqkPRNBQK]/g) || []).length;
+    const newPieceCount = (newGameState.match(/[prnbqkPRNBQK]/g) || []).length;
+
+    // The reward is the difference in the number of pieces
+    // Positive if the AI captured a piece, negative if the AI lost a piece
+    return oldPieceCount - newPieceCount;
 }
 
 function interpretOutput(output) {
@@ -214,6 +254,35 @@ function drawBoard() {
             ctx.fillRect(i * SQUARE_SIZE, j * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
         }
     }
+    if (game.turn() === 'b') {
+        // Calculate legal squares
+        const legalMoves = game.moves({verbose: true});
+        const legalSquares = legalMoves.map(move => move.to);
+
+        // Calculate outputArray
+        const input = convertGameStateToInput(game);
+        const output = model.predict(input);
+        const outputArray = output.dataSync();
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                const square = String.fromCharCode('a'.charCodeAt(0) + i) + (8 - j);
+                if (legalSquares.includes(square)) {
+                    const value = outputArray[i * 8 + j];
+                    const intensity = Math.round(value * 255);
+                    ctx.fillStyle = `rgba(144, 238, 144, ${value})`; // light green with transparency
+                    ctx.fillRect(i * SQUARE_SIZE, j * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+
+                    // Draw the percentages
+                    ctx.fillStyle = 'black';
+                    ctx.font = '16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText((value * 100).toFixed(2) + '%', (i + 0.5) * SQUARE_SIZE, (j + 0.5) * SQUARE_SIZE);
+                }
+            }
+        }
+    }
+
 
     // Highlight the possible moves
     for (let i = 0; i < 8; i++) {
