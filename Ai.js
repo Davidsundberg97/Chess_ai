@@ -92,11 +92,19 @@ function getReward(game) {
     let reward = 0;
 
     if (lastMove && lastMove.captured) {
-        // Increase the reward if a piece was captured
-        reward += 50;
+      if (lastMove.color !== 'b') {  // Assuming 'b' is the color of the AI
+        // Decrease the reward if the AI's piece was captured
+        reward -= 50;
+      } else {
+          // Increase the reward if a piece was captured
+          reward += 50;
+      }
     }
 
-    if (game.isCheckmate()) {
+    if (game.isCheckmate() === 'b') {  // Assuming 'b' is the color of the AI
+      // Decrease the reward if the AI is in checkmate
+      reward -= 100;
+    } else if (game.isCheckmate() === 'w') {
         // Increase the reward if the opponent is in checkmate
         reward += 100;
     } else if (game.isDraw()) {

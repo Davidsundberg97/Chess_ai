@@ -5,6 +5,7 @@
         <title>Chess</title>
         <style>
             html, body {
+                font-family: Arial, sans-serif;
                 height: 100%;
                 margin: 0;
                 background: linear-gradient(to bottom, white, grey);
@@ -48,14 +49,32 @@
                 align-items: center;
             }
             #boardContainer {
-                display: flex;
-                justify-content: center;
+                width: 500px;
+                height: 500px;
+                border: 1px solid #000;
+                margin: 20px;
             }
             #capturedPiecesContainer {
                 position: absolute;
                 right: 0;
                 top: 50%;
                 transform: translateY(-50%);
+            }
+            #restartButton {
+                display: block;
+                background-color: #114713; /* Green */
+                border: none;
+                color: white;
+                padding: 15px 32px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                margin: 4px 2px;
+                cursor: pointer;
+            }
+            #restartButton:hover {
+                background-color: #45a049;
             }
         </style>
     </head>
@@ -69,7 +88,6 @@
         <div id="mainContent">
             <h1>Welcome to my Chess game!</h1>
             <p>This is a simple chess game built with JavaScript.</p>
-            <button id="testButton">Test Firebase</button>
             <div id="boardContainer">
                 <canvas id="myCanvas" width="500" height="500"></canvas>
             </div>
@@ -78,6 +96,7 @@
                 <canvas id="capturedWhitePiecesCanvas" width="60" height="240"></canvas>
                 <canvas id="capturedBlackPiecesCanvas" width="60" height="240"></canvas>
             </div>
+            <button id="restartButton">Restart</button>
             
         </div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.min.js"></script>

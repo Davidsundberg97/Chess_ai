@@ -175,7 +175,7 @@ function makePredictedMove() {
      // Save the current game state
      console.log('Game state:', game.fen());
      const input = convertGameStateToInput(game);
-        //console.log(input , 'Here');
+        console.log(input , 'Here');
 
      // Assuming `input` is your input data
      let inputTensor = tf.tensor2d([input]);  // Convert the 1D array to a 2D array
@@ -185,20 +185,23 @@ function makePredictedMove() {
 
      // Use the model to predict the next move
      const output = model.predict(inputTensor);
+     console.log(output , 'Here');  // Print the output tensor
  
      // Interpret the output to determine the next move
      const move = interpretOutput(output);
+     console.log('Interpreted move:', move);
      for (let i = 0; i < 10; i++) {
-        const input = tf.randomNormal([1, 64]);
-        const output = model.predict(input);
-        //console.log(`Input ${i}:`, Array.from(input.dataSync()));
-        //console.log(`Output ${i}:`, Array.from(output.dataSync()));
-    }
+       const input = tf.randomNormal([1, 64]);
+       const output = model.predict(input);
+        console.log(`Input ${i}:`, Array.from(input.dataSync()));
+        console.log(`Output ${i}:`, Array.from(output.dataSync()));
+     }
  
     // Wait for 2 seconds before making the move
     if(game.turn() === 'b') {
         setTimeout(function() {
             // Make the move
+            console.log('Move:', move);
             game.move(move);
             // Calculate the reward
             //console.log('Reward:', reward);
@@ -209,19 +212,11 @@ function makePredictedMove() {
 
 
 function interpretOutput(output) {
-    // This function should convert the output of the model into a move
-    // The output is an array of length 64
-    // The index with the highest value represents the square to move to
-    // For example, if the output is [0, 0, 0, 0.5, 0, 0, 0, 0, ..., 0]
-    // then the AI should move to square d2 (index 3)
-    //console.log(output);
     const outputArray = output.dataSync();
-    //console.log('Output array:', outputArray);
-    //console.log('Output array length:', outputArray.length);
-    //console.log('Output shape:', output.shape);
+    const possibleMoves = game.moves({verbose: true});
     let maxIndex = 0;
     let maxValue = 0;
-    for (let i = 0; i < outputArray.length; i++) {
+    for (let i = 0; i < possibleMoves.length; i++) {
         if (outputArray[i] > maxValue) {
             maxValue = outputArray[i];
             maxIndex = i;
@@ -229,8 +224,7 @@ function interpretOutput(output) {
     }
     console.log('Max index:', maxIndex);
     console.log('Max value:', maxValue);
-    //console.log('Move:', game.moves({verbose: true})[maxIndex]);
-    return game.moves({verbose: true})[maxIndex];
+    return possibleMoves[maxIndex];
 }
 
 
@@ -246,6 +240,18 @@ canvas.addEventListener('mousedown', function(e) {
             possibleMoves = game.moves({square: draggedPiece.square, verbose: true}).map(move => move.to);
         }
     }
+});
+
+document.getElementById('restartButton').addEventListener('click', function() {
+    // Code to restart the game goes here
+    game.reset();
+    capturedWhitePieces = [];
+    capturedBlackPieces = [];
+    whiteTime = 10 * 60; // 10 minutes in seconds
+    blackTime = 10 * 60;
+    updateTimerDisplay();
+    
+
 });
 
 canvas.addEventListener('mousemove', function(e) {
