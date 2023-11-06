@@ -11,6 +11,7 @@ export async function initializeModel() {
     }
   
     if (!model) {
+      console.log('No model found, creating a new one');
       model = tf.sequential();
   
       model.add(tf.layers.dense({units: 128, activation: 'relu', inputShape: [64]}));
