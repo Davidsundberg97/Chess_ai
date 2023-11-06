@@ -1,12 +1,13 @@
 import { initializeModel, convertGameStateToInput } from './model.js';
 
 // Now you can use these functions in this file
-let model = initializeModel();
+
 //let input = convertGameStateToInput(game);
 
-window.onload = function() {
+window.onload = async function() {
     // Your JavaScript code goes here
-
+    let model = await initializeModel();
+    console.log(model, 'model');
 
     const tensor = tf.tensor([1, 2, 3, 4]);
 
@@ -117,7 +118,13 @@ let isMoveBeingMade = false;
 // Start the game loop
 function gameLoop() {
     drawBoard();
+   // console.log('Turn:', game.turn(), 'Is move being made:', isMoveBeingMade);
+    if (game.turn() === 'b') {
+      //  console.log("It's black's turn");
+    }
         if (game.turn() === 'b' && !isMoveBeingMade) {
+            console.log('makePredictedMove called');
+            
             makePredictedMove();
         }
     // Check if the game is over
@@ -158,54 +165,72 @@ function gameLoop() {
     drawCapturedPieces();
 }
 
-// Start the game loop when the page loads
-window.onload = function() {
-    gameLoop();
-};
 
 
 
 function makePredictedMove() {
+    console.log('makePredictedMove called');
      isMoveBeingMade = true;
 
      // Save the current game state
-    const oldGameState = game.fen();
-     // Convert the current game state to a tensor
+     console.log('Game state:', game.fen());
      const input = convertGameStateToInput(game);
+        //console.log(input , 'Here');
+
+     // Assuming `input` is your input data
+     let inputTensor = tf.tensor2d([input]);  // Convert the 1D array to a 2D array
+    
+     console.log(inputTensor.shape , 'Here');  // Print the shape of the inputTensor
+       // console.log(inputTensor.dataSync() , 'Here');  // Print the data of the inputTensor
 
      // Use the model to predict the next move
-     const output = model.predict(input);
+     const output = model.predict(inputTensor);
  
      // Interpret the output to determine the next move
      const move = interpretOutput(output);
+     for (let i = 0; i < 10; i++) {
+        const input = tf.randomNormal([1, 64]);
+        const output = model.predict(input);
+        //console.log(`Input ${i}:`, Array.from(input.dataSync()));
+        //console.log(`Output ${i}:`, Array.from(output.dataSync()));
+    }
  
     // Wait for 2 seconds before making the move
-    setTimeout(function() {
-        // Make the move
-        game.move(move);
-         // Calculate the reward
-        const reward = calculateReward(oldGameState, game.fen());
-        console.log('Reward:', reward);
-        isMoveBeingMade = false;
-    }, 500);
+    if(game.turn() === 'b') {
+        setTimeout(function() {
+            // Make the move
+            game.move(move);
+            // Calculate the reward
+            //console.log('Reward:', reward);
+            isMoveBeingMade = false;
+        }, 1000);
+    }   
 }
 
-function calculateReward(oldGameState, newGameState) {
-    // Count the number of pieces in the old and new game states
-    const oldPieceCount = (oldGameState.match(/[prnbqkPRNBQK]/g) || []).length;
-    const newPieceCount = (newGameState.match(/[prnbqkPRNBQK]/g) || []).length;
-
-    // The reward is the difference in the number of pieces
-    // Positive if the AI captured a piece, negative if the AI lost a piece
-    return oldPieceCount - newPieceCount;
-}
 
 function interpretOutput(output) {
     // This function should convert the output of the model into a move
-    // For now, let's just make a random legal move
-    const legalMoves = game.moves();
-    const randomIndex = Math.floor(Math.random() * legalMoves.length);
-    return legalMoves[randomIndex];
+    // The output is an array of length 64
+    // The index with the highest value represents the square to move to
+    // For example, if the output is [0, 0, 0, 0.5, 0, 0, 0, 0, ..., 0]
+    // then the AI should move to square d2 (index 3)
+    //console.log(output);
+    const outputArray = output.dataSync();
+    //console.log('Output array:', outputArray);
+    //console.log('Output array length:', outputArray.length);
+    //console.log('Output shape:', output.shape);
+    let maxIndex = 0;
+    let maxValue = 0;
+    for (let i = 0; i < outputArray.length; i++) {
+        if (outputArray[i] > maxValue) {
+            maxValue = outputArray[i];
+            maxIndex = i;
+        }
+    }
+    console.log('Max index:', maxIndex);
+    console.log('Max value:', maxValue);
+    //console.log('Move:', game.moves({verbose: true})[maxIndex]);
+    return game.moves({verbose: true})[maxIndex];
 }
 
 
@@ -261,23 +286,58 @@ function drawBoard() {
 
         // Calculate outputArray
         const input = convertGameStateToInput(game);
-        const output = model.predict(input);
+        let inputTensor = tf.tensor2d([input]);  // Convert the 1D array to a 2D tensor and provide the shape
+        // Check if any elements of the input are NaN
+        let containsNaN = false;
+        for (let i = 0; i < input.length; i++) {
+            if (isNaN(input[i])) {
+                containsNaN = true;
+                break;
+            }
+        }
+
+
+
+
+        const output = model.predict(inputTensor);
+        //console.log('Output:', output);
+        let outputData = output.dataSync();  // Get the data from the tensor
+
+        let outputContainsNaN = false;
+        for (let i = 0; i < outputData.length; i++) {
+        if (isNaN(outputData[i])) {
+            outputContainsNaN = true;
+            break;
+        }
+        }
+
+        //console.log('Output contains NaN:', outputContainsNaN);
+
         const outputArray = output.dataSync();
+        //console.log('Output array:', outputArray);
+        //console.log('Output array length:', outputArray.length);
+        //console.log('Output shape:', output.shape);
+        
         for (let i = 0; i < 8; i++) {
             for (let j = 0; j < 8; j++) {
-                const square = String.fromCharCode('a'.charCodeAt(0) + i) + (8 - j);
+                const square = String.fromCharCode('a'.charCodeAt(0) + i) + (8 - j).toString();
                 if (legalSquares.includes(square)) {
-                    const value = outputArray[i * 8 + j];
-                    const intensity = Math.round(value * 255);
-                    ctx.fillStyle = `rgba(144, 238, 144, ${value})`; // light green with transparency
+                    const value = outputArray[i * 8 + j];  // Access the value from the 1D array
+                    //i want to log the highes value and square and also output it in the canvas
+                    if (value > 0.5) {
+                        //console.log(`Value for square ${square}:`, value);
+                    }
+                    const scaledValue = Math.pow(value, 0.5);  // Use a power scale
+                    //console.log(`Scaled value for square ${square}:`, scaledValue);
+                    ctx.fillStyle = `rgba(144, 238, 144, ${scaledValue})`; // light green with transparency
                     ctx.fillRect(i * SQUARE_SIZE, j * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
-
+        
                     // Draw the percentages
                     ctx.fillStyle = 'black';
                     ctx.font = '16px Arial';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText((value * 100).toFixed(2) + '%', (i + 0.5) * SQUARE_SIZE, (j + 0.5) * SQUARE_SIZE);
+                    ctx.fillText((value * 100).toFixed(2) , (i + 0.5) * SQUARE_SIZE, (j + 0.5) * SQUARE_SIZE);
                 }
             }
         }
@@ -377,5 +437,4 @@ function drawCapturedPieces() {
 
 // Start the game loop
 gameLoop();
-
 };
