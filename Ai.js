@@ -122,7 +122,7 @@ function isSAN(move) {
 }
 
 async function trainModel(model, gameHistories) {
-    const alpha = 0.5;  // Learning rate
+    const alpha = 0.7;  // Learning rate
     const gamma = 0.9;  // Discount factor
 
     // Create arrays to store the training data and labels
@@ -179,35 +179,46 @@ async function trainModel(model, gameHistories) {
     }
 
     /// Assume `moves` is an array of move objects
-var targetValuesArray = trainingLabels.map(convertMoveToOutput);
+    var targetValuesArray = trainingLabels.map(convertMoveToOutput);
 
-// Convert the array to a tensor and reshape it
-const targetValues = tf.tensor2d(targetValuesArray);
-const reshapedTargetValues = targetValues.reshape([trainingLabels.length, 64]);
+    // Convert the array to a tensor and reshape it
+    const targetValues = tf.tensor2d(targetValuesArray);
+    const reshapedTargetValues = targetValues.reshape([trainingLabels.length, 64]);
 
-// Convert the training data to a tensor
-const trainingDataTensor = tf.tensor2d(trainingData, [trainingData.length, 64]);
-const weightsBeforeTraining = model.getWeights();
+    // Convert the training data to a tensor
+    const trainingDataTensor = tf.tensor2d(trainingData, [trainingData.length, 64]);
+    const weightsBeforeTraining = model.getWeights();
 
-// Train the model on the training data and reshaped target values
-await model.fit(trainingDataTensor, reshapedTargetValues, {
-    epochs: 200,  // Number of epochs to train for
-    callbacks: {
-        onEpochEnd: (epoch, logs) => {
-            let weights = model.getWeights();
-            let weightsContainNaN = weights.some(weight => tf.isNaN(weight).any().dataSync()[0]);
+    // Train the model on the training data and reshaped target values
+    await model.fit(trainingDataTensor, reshapedTargetValues, {
+      epochs: 100,  // Number of epochs to train for
+      callbacks: {
+          onEpochBegin: (epoch, logs) => {
+              // Log the weights before training
+              model.getWeights().forEach((weight, index) => {
+                  console.log(`Weights in layer ${index} before training:`, weight.dataSync());
+              });
+          },
+          onEpochEnd: (epoch, logs) => {
+              // Log the weights after training
+              model.getWeights().forEach((weight, index) => {
+                  console.log(`Weights in layer ${index} after training:`, weight.dataSync());
+              });
 
-            console.log(`Epoch ${epoch + 1} ended. Loss: ${logs.loss}. Weights contain NaN: ${weightsContainNaN}`);
-        },
-    },
-});
+              let weights = model.getWeights();
+              let weightsContainNaN = weights.some(weight => tf.isNaN(weight).any().dataSync()[0]);
 
-const weightsAfterTraining = model.getWeights();
+              console.log(`Epoch ${epoch + 1} ended. Loss: ${logs.loss}. Weights contain NaN: ${weightsContainNaN}`);
+          },
+      },
+    });
 
-for (let i = 0; i < weightsBeforeTraining.length; i++) {
-    const areWeightsEqual = weightsBeforeTraining[i].equal(weightsAfterTraining[i]).all().dataSync()[0];
-    console.log(`Weights in layer ${i} are ${areWeightsEqual ? 'equal' : 'not equal'}`);
-}
+    const weightsAfterTraining = model.getWeights();
+
+  for (let i = 0; i < weightsBeforeTraining.length; i++) {
+      const areWeightsEqual = weightsBeforeTraining[i].equal(weightsAfterTraining[i]).all().dataSync()[0];
+      console.log(`Weights in layer ${i} are ${areWeightsEqual ? 'equal' : 'not equal'}`);
+  }
 
     
       

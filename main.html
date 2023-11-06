@@ -14,23 +14,31 @@
                 align-items: center;
                 flex-direction: column;
             }
+            #mainContent p {
+                padding: 0px; /* Adjust this value as needed */
+            }
+            p {
+                margin: 5px 0; /* Adjust this value as needed */
+            }
             .timer {
                 padding: 10px;
                 color: #fff;
                 position: absolute;
                 text-align: center;
                 width: 100px;
+                border-radius: 50%;
+                 box-shadow: 0px 0px 5px 2px rgba(0, 0, 0, 0.2);
                 background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%);
             }
 
             .black-timer {
-                background: radial-gradient(circle, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+                background: rgba(0,0,0,0.8);
                 top: 10px;
                 left: 10px;
             }
 
             .white-timer {
-                background: radial-gradient(circle, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
+                background: rgba(255,255,255,0.8);
                 color: black;
                 bottom: 10px;
                 left: 10px;
@@ -76,6 +84,33 @@
             #restartButton:hover {
                 background-color: #45a049;
             }
+
+            @media screen and (max-width: 600px) {
+                .timer {
+                    width: 80px;
+                }
+                .black-timer, .white-timer {
+                    left: 5px;
+                }
+                #boardContainer {
+                    width: 90%;
+                    height: 90%;
+                }
+                #capturedPiecesCanvas {
+                    width: 30px;
+                    height: 240px;
+                }
+                #mainContent {
+                    flex-direction: column;
+                    align-items: center;
+                }
+                #capturedPiecesContainer {
+                    position: relative;
+                    right: auto;
+                    top: auto;
+                    transform: none;
+                }
+            }
         </style>
     </head>
     <body>
@@ -87,7 +122,9 @@
         </div>
         <div id="mainContent">
             <h1>Welcome to my Chess game!</h1>
-            <p>This is a simple chess game built with JavaScript.</p>
+            <p>This is an online ai built on Tensorflow</p>
+            <p>The ai gets updated every hour and trains on all the finished games that have been played on this site</p>
+            <p>The colored squares shows what the ai predict is the best move</p>
             <div id="boardContainer">
                 <canvas id="myCanvas" width="500" height="500"></canvas>
             </div>
@@ -96,7 +133,6 @@
                 <canvas id="capturedWhitePiecesCanvas" width="60" height="240"></canvas>
                 <canvas id="capturedBlackPiecesCanvas" width="60" height="240"></canvas>
             </div>
-            <button id="restartButton">Restart</button>
             
         </div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.min.js"></script>
@@ -108,34 +144,18 @@
         <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
         <script> 
             const firebaseConfig = {
-            apiKey: "AIzaSyBrh_RA4ZzqeDtw8-AbiGDgY4WzyqK0X0w",
-            authDomain: "chess-c0a89.firebaseapp.com",
-            projectId: "chess-c0a89",
-            storageBucket: "chess-c0a89.appspot.com",
-            messagingSenderId: "308918904379",
-            appId: "1:308918904379:web:d438a897bf640154929e1e",
-            measurementId: "G-2CYK2Z36PZ"
+                apiKey: "AIzaSyBrh_RA4ZzqeDtw8-AbiGDgY4WzyqK0X0w",
+                authDomain: "chess-c0a89.firebaseapp.com",
+                projectId: "chess-c0a89",
+                storageBucket: "chess-c0a89.appspot.com",
+                messagingSenderId: "308918904379",
+                appId: "1:308918904379:web:d438a897bf640154929e1e",
+                measurementId: "G-2CYK2Z36PZ"
             };
-
+            
             firebase.initializeApp(firebaseConfig);
             firebase.analytics();
         </script>
-        <script>
-            document.getElementById('testButton').addEventListener('click', function() {
-                // Get a reference to the Firestore database
-                var db = firebase.firestore();
-        
-                // Add a new document with a generated id
-                db.collection("testCollection").add({
-                    testField: "Hello, Firebase!"
-                })
-                .then(function(docRef) {
-                    console.log("Document written with ID: ", docRef.id);
-                })
-                .catch(function(error) {
-                    console.error("Error adding document: ", error);
-                });
-            });
-        </script>
+            <button id="restartButton">Restart</button>
     </body>
 </html>

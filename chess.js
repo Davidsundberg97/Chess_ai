@@ -1,3 +1,4 @@
+
 import { initializeModel, convertGameStateToInput } from './model.js';
 
 // Now you can use these functions in this file
@@ -228,7 +229,11 @@ function interpretOutput(output) {
 }
 
 
-canvas.addEventListener('mousedown', function(e) {
+
+
+
+function handleMouseDown(e) {
+    // Your existing code here...
     if (!draggedPiece) {
         const rect = canvas.getBoundingClientRect();
         const x = Math.floor((e.clientX - rect.left) / SQUARE_SIZE);
@@ -240,30 +245,20 @@ canvas.addEventListener('mousedown', function(e) {
             possibleMoves = game.moves({square: draggedPiece.square, verbose: true}).map(move => move.to);
         }
     }
-});
+}
 
-document.getElementById('restartButton').addEventListener('click', function() {
-    // Code to restart the game goes here
-    game.reset();
-    capturedWhitePieces = [];
-    capturedBlackPieces = [];
-    whiteTime = 10 * 60; // 10 minutes in seconds
-    blackTime = 10 * 60;
-    updateTimerDisplay();
-    
-
-});
-
-canvas.addEventListener('mousemove', function(e) {
+function handleMouseMove(e) {
+    // Your existing code here...
     if (draggedPiece) {
         const rect = canvas.getBoundingClientRect();
         draggedPieceX = e.clientX - rect.left;
         draggedPieceY = e.clientY - rect.top;
         drawBoard();
     }
-});
+}
 
-canvas.addEventListener('mouseup', function(e) {
+function handleMouseUp(e) {
+    // Your existing code here...
     if (draggedPiece) {
         const rect = canvas.getBoundingClientRect();
         const x = Math.floor((e.clientX - rect.left) / SQUARE_SIZE);
@@ -273,7 +268,50 @@ canvas.addEventListener('mouseup', function(e) {
         possibleMoves = []; // Clear the possible moves
         drawBoard();
     }
-});
+}
+
+// Add a similar function for handling touch start events:
+function handleTouchStart(event) {
+    event.preventDefault(); // Prevent the browser from doing the default action
+    var touch = event.changedTouches[0]; // Get the first touch event
+    handleMouseDown(touch); // Call the mouse down handler with the touch event
+}
+// Add a similar function for handling touch start events:
+function handleTouchEnd(event) {
+    event.preventDefault(); // Prevent the browser from doing the default action
+    var touch = event.changedTouches[0]; // Get the first touch event
+    handleMouseUp(touch); // Call the mouse down handler with the touch event
+}
+// Add a similar function for handling touch start events:
+function handleTouchMove(event) {
+    event.preventDefault(); // Prevent the browser from doing the default action
+    var touch = event.changedTouches[0]; // Get the first touch event
+    handleMouseMove(touch); // Call the mouse down handler with the touch event
+}
+
+canvas.addEventListener('mousedown', handleMouseDown, false);
+canvas.addEventListener('mousemove', handleMouseMove, false);
+canvas.addEventListener('mouseup', handleMouseUp, false);
+canvas.addEventListener('touchstart', handleTouchStart, false);
+canvas.addEventListener('touchmove', handleTouchMove, false);
+canvas.addEventListener('touchend', handleTouchEnd, false);
+
+
+const restartButton = document.getElementById('restartButton');
+restartButton.addEventListener('click', function() {
+    // Code to restart the game goes here
+    console.log('Button clicked');
+    game.reset();
+    capturedWhitePieces = [];
+    capturedBlackPieces = [];
+    whiteTime = 10 * 60; // 10 minutes in seconds
+    blackTime = 10 * 60;
+    updateTimerDisplay();
+
+
+})
+
+
 
 
 function drawBoard() {
@@ -320,34 +358,101 @@ function drawBoard() {
         //console.log('Output contains NaN:', outputContainsNaN);
 
         const outputArray = output.dataSync();
+        const possibleMoves = game.moves({verbose: true});
+        let maxIndex = 0;
+        let maxValue = 0;
+        let squareValues = new Map();
+        for (let i = 0; i < possibleMoves.length; i++) {
+            const value = outputArray[i];
+            if (value > maxValue) {
+                maxValue = value;
+                maxIndex = i;
+            }
+                // Draw all possible moves
+                const move = possibleMoves[i];
+                const toSquare = move.to;
+
+                // Convert the squares to coordinates
+                const toCoord = { i: toSquare.charCodeAt(0) - 'a'.charCodeAt(0), j: 8 - parseInt(toSquare[1]) };
+
+                // Update the highest value for the square
+                const squareKey = `${toCoord.i},${toCoord.j}`;
+                if (!squareValues.has(squareKey) || value > squareValues.get(squareKey)) {
+                    squareValues.set(squareKey, value);
+                }
+        }
+
+        for (const [squareKey, value] of squareValues.entries()) {
+            const [i, j] = squareKey.split(',').map(Number);
+        
+            // Draw the to square
+            ctx.fillStyle = squareKey === `${i},${j}` ? 'rgba(173, 216, 230, 0.3)' : `rgba(144, 238, 144, ${Math.pow(value, 0.5)})`;
+            ctx.fillRect(i * SQUARE_SIZE, j * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+        
+            // Draw the percentages
+            ctx.fillStyle = 'black';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText((value * 100).toFixed(2) , (i + 0.5) * SQUARE_SIZE, (j + 0.5) * SQUARE_SIZE);
+        }
+        console.log('Max index:', maxIndex);
+        console.log('Max value:', maxValue);
+
+        if (possibleMoves.length > 0) {
+            const move = possibleMoves[maxIndex];
+            const toSquare = move.to;
+
+            // Convert the squares to coordinates
+            const toCoord = { i: toSquare.charCodeAt(0) - 'a'.charCodeAt(0), j: 8 - parseInt(toSquare[1]) };
+
+            // Draw the to square
+            ctx.fillStyle = 'rgba(144, 238, 144, 0.3)'; // light green with transparency
+            ctx.fillRect(toCoord.i * SQUARE_SIZE, toCoord.j * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+        }
+
+        
+
+        
+
         //console.log('Output array:', outputArray);
         //console.log('Output array length:', outputArray.length);
         //console.log('Output shape:', output.shape);
+        // let highestValue = -100;
+        // let highestValueSquare = null;
+        // //Heatmap
+        // for (let i = 0; i < 8; i++) {
+        //     for (let j = 0; j < 8; j++) {
+        //         const square = String.fromCharCode('a'.charCodeAt(0) + i) + (8 - j).toString();
+        //         if (legalSquares.includes(square)) {
+        //             const value = outputArray[i * 8 + j];  // Access the value from the 1D array
+        //             //i want to log the highes value and square and also output it in the canvas
+        //             // Update the highest value and its square
+        //             if (value > highestValue) {
+        //                 highestValue = value;
+        //                 highestValueSquare = { i, j };
+        //             }
+        //             const scaledValue = Math.pow(value, 0.5);  // Use a power scale
+        //             //console.log(`Scaled value for square ${square}:`, scaledValue);
+        //             ctx.fillStyle = `rgba(144, 238, 144, ${scaledValue})`; // light green with transparency
+        //             ctx.fillRect(i * SQUARE_SIZE, j * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
         
-        for (let i = 0; i < 8; i++) {
-            for (let j = 0; j < 8; j++) {
-                const square = String.fromCharCode('a'.charCodeAt(0) + i) + (8 - j).toString();
-                if (legalSquares.includes(square)) {
-                    const value = outputArray[i * 8 + j];  // Access the value from the 1D array
-                    //i want to log the highes value and square and also output it in the canvas
-                    if (value > 0.5) {
-                        //console.log(`Value for square ${square}:`, value);
-                    }
-                    const scaledValue = Math.pow(value, 0.5);  // Use a power scale
-                    //console.log(`Scaled value for square ${square}:`, scaledValue);
-                    ctx.fillStyle = `rgba(144, 238, 144, ${scaledValue})`; // light green with transparency
-                    ctx.fillRect(i * SQUARE_SIZE, j * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
-        
-                    // Draw the percentages
-                    ctx.fillStyle = 'black';
-                    ctx.font = '16px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText((value * 100).toFixed(2) , (i + 0.5) * SQUARE_SIZE, (j + 0.5) * SQUARE_SIZE);
-                }
-            }
-        }
+        //             // Draw the percentages
+        //             ctx.fillStyle = 'black';
+        //             ctx.font = '16px Arial';
+        //             ctx.textAlign = 'center';
+        //             ctx.textBaseline = 'middle';
+        //             ctx.fillText((value * 100).toFixed(2) , (i + 0.5) * SQUARE_SIZE, (j + 0.5) * SQUARE_SIZE);
+        //         }
+        //     }
+        // }
+        // // Draw the square with the highest value in red
+        // if (highestValueSquare !== null) {
+        //     ctx.fillStyle = 'red';
+        //     ctx.fillRect(highestValueSquare.i * SQUARE_SIZE, highestValueSquare.j * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+        // }
     }
+
 
 
     // Highlight the possible moves
