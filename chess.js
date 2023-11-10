@@ -79,7 +79,7 @@ function updateTimerDisplay() {
     document.getElementById('whiteTimer').textContent = `${whiteMinutes}:${whiteSeconds < 10 ? '0' : ''}${whiteSeconds}`;
     document.getElementById('blackTimer').textContent = `${blackMinutes}:${blackSeconds < 10 ? '0' : ''}${blackSeconds}`;
 }
-
+///TODO create a procedualy generated board
 // Load the images
 const images = {
     'b': {
@@ -300,13 +300,14 @@ canvas.addEventListener('touchend', handleTouchEnd, false);
 const restartButton = document.getElementById('restartButton');
 restartButton.addEventListener('click', function() {
     // Code to restart the game goes here
-    console.log('Button clicked');
-    game.reset();
-    capturedWhitePieces = [];
-    capturedBlackPieces = [];
-    whiteTime = 10 * 60; // 10 minutes in seconds
-    blackTime = 10 * 60;
-    updateTimerDisplay();
+    // console.log('Button clicked');
+    // game.reset();
+    // capturedWhitePieces = [];
+    // capturedBlackPieces = [];
+    // whiteTime = 10 * 60; // 10 minutes in seconds
+    // blackTime = 10 * 60;
+    // updateTimerDisplay();
+    location.reload();
 
 
 })

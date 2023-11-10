@@ -44,6 +44,7 @@ db.collection('games').get().then((querySnapshot) => {
 
     console.log('Model summary after training:');
     model.summary();
+    //TODO add the previous model to the new model
 
 });
 
@@ -91,13 +92,24 @@ function getReward(game) {
     const lastMove = game.history({ verbose: true }).slice(-1)[0];
     let reward = 0;
 
+
+    // Define the rewards for each piece type
+    const pieceRewards = {
+      'p': 10,  // Pawn
+      'n': 30,  // Knight
+      'b': 30,  // Bishop
+      'r': 50,  // Rook
+      'q': 90,  // Queen
+  };
+
     if (lastMove && lastMove.captured) {
+      const pieceReward = pieceRewards[lastMove.captured] || 0;
       if (lastMove.color !== 'b') {  // Assuming 'b' is the color of the AI
         // Decrease the reward if the AI's piece was captured
-        reward -= 50;
+        reward -= pieceReward;
       } else {
           // Increase the reward if a piece was captured
-          reward += 50;
+          reward += pieceReward;
       }
     }
 
@@ -122,7 +134,7 @@ function isSAN(move) {
 }
 
 async function trainModel(model, gameHistories) {
-    const alpha = 0.7;  // Learning rate
+    const alpha = 0.1;  // Learning rate
     const gamma = 0.9;  // Discount factor
 
     // Create arrays to store the training data and labels
@@ -191,18 +203,18 @@ async function trainModel(model, gameHistories) {
 
     // Train the model on the training data and reshaped target values
     await model.fit(trainingDataTensor, reshapedTargetValues, {
-      epochs: 100,  // Number of epochs to train for
+      epochs: 3000,  // Number of epochs to train for
       callbacks: {
           onEpochBegin: (epoch, logs) => {
               // Log the weights before training
               model.getWeights().forEach((weight, index) => {
-                  console.log(`Weights in layer ${index} before training:`, weight.dataSync());
+                 // console.log(`Weights in layer ${index} before training:`, weight.dataSync());
               });
           },
           onEpochEnd: (epoch, logs) => {
               // Log the weights after training
               model.getWeights().forEach((weight, index) => {
-                  console.log(`Weights in layer ${index} after training:`, weight.dataSync());
+                //  console.log(`Weights in layer ${index} after training:`, weight.dataSync());
               });
 
               let weights = model.getWeights();
@@ -217,7 +229,7 @@ async function trainModel(model, gameHistories) {
 
   for (let i = 0; i < weightsBeforeTraining.length; i++) {
       const areWeightsEqual = weightsBeforeTraining[i].equal(weightsAfterTraining[i]).all().dataSync()[0];
-      console.log(`Weights in layer ${i} are ${areWeightsEqual ? 'equal' : 'not equal'}`);
+      //console.log(`Weights in layer ${i} are ${areWeightsEqual ? 'equal' : 'not equal'}`);
   }
 
     

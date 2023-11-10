@@ -1,7 +1,7 @@
 // model.js
 export async function initializeModel() {
     let model;
-  
+    //TODO add a way to Load data from a local file
     try {
       model = await loadModelFromFirebase();
       console.log('Loaded model from Firebase');
