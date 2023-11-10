@@ -20,7 +20,7 @@ The main part of the code is a training loop for a neural network model. Here's 
 
 ## Usage
 
-To train the model, run the `train` function with your training data and labels. The function will return the trained model.
+To train the model, run the `Node Ai.js` function with your training data and labels. The function will return the trained model.
 
 ## Requirements
 
